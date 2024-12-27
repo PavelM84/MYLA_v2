@@ -9,7 +9,7 @@ bot = Bot(token=API_TOKEN)
 dp = Dispatcher(bot)
 
 # Хэндлер для команды /start
-@dp.message_handler(commands=['start'])
+@dp.message_handler(commands=['login'])
 async def send_welcome(message: types.Message):
     await message.reply("Привет! Напишите команду 'Login', чтобы открыть YouTube.")
 
