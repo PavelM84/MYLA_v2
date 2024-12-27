@@ -13,7 +13,9 @@ async def download_and_send_media(bot, chat_id, url, media_type):
     ydl_opts = {
         'format': 'best[height<=480]' if media_type == 'video' else 'bestaudio/best',
         'outtmpl': f"downloads/%(title)s.{'mp4' if media_type == 'video' else 'm4a'}",
-        'cookies_from_browser': 'Chrome',  # Добавляем параметр для использования cookies из браузера Chrome
+        'cookies_from_browser': 'Chrome',  # Используем куки из браузера Chrome
+        # Если вам нужно использовать конкретные куки, укажите файл с куками с помощью '--cookies'
+        # 'cookies': '/path/to/cookies.txt',  # Пример использования куки файла
     }
 
     try:
