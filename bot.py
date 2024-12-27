@@ -4,6 +4,10 @@ import os
 from aiogram import Bot, Dispatcher, types
 from aiogram.utils import executor
 
+from dotenv import load_dotenv
+
+from handlers import callaback, commands
+
 BOT_TOKEN = '7959132994:AAFo3r9-EhvUUkxpi7kDfU7BZaBMHTyTqdU'
 
 
@@ -29,10 +33,7 @@ if __name__ == '__main__':
 
 #/1
 
-from aiogram import Bot, Dispatcher
-from dotenv import load_dotenv
 
-from handlers import callaback, commands
 
 #2
 
