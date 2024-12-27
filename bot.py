@@ -1,7 +1,30 @@
 import asyncio
 import os
 #1
-#import telebot
+from aiogram import Bot, Dispatcher, types
+from aiogram.utils import executor
+
+
+bot = Bot(token=API_TOKEN)
+dp = Dispatcher(bot)
+
+# Хэндлер для команды /start
+@dp.message_handler(commands=['start'])
+async def send_welcome(message: types.Message):
+    await message.reply("Привет! Напишите команду 'Login', чтобы открыть YouTube.")
+
+# Хэндлер для команды 'Login'
+@dp.message_handler(lambda message: message.text.lower() == 'login')
+async def open_youtube(message: types.Message):
+    youtube_url = "https://www.youtube.com"  # Ссылка на YouTube
+    await message.reply(f"Открываю YouTube для вас: {youtube_url}")
+
+# Запуск бота
+if __name__ == '__main__':
+    from aiogram import executor
+    executor.start_polling(dp)
+
+
 #/1
 
 from aiogram import Bot, Dispatcher
