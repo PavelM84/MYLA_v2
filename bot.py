@@ -4,8 +4,10 @@ import os
 from aiogram import Bot, Dispatcher, types
 from aiogram.utils import executor
 
+API_TOKEN = 'BOT_TOKEN'
 
-bot = Bot(token=BOT_TOKEN)
+
+bot = Bot(token=API_TOKEN)
 dp = Dispatcher(bot)
 
 # Хэндлер для команды /start
