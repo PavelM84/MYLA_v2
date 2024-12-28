@@ -34,7 +34,7 @@ def download_video(url):
         subprocess.run(command, check=True)
     except subprocess.CalledProcessError as e:
         print(f"Ошибка при загрузке видео: {e}")
-#
+
 
 
 url_storage = load_url_storage()
