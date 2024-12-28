@@ -8,7 +8,13 @@ import subprocess
 URL_STORAGE_FILE = "url_storage_json"
 
 #
-COOKIES_FILE = os.path.join(os.path.dirname(__file__), "cookies.txt")
+COOKIES_FILE = "cookies.txt"
+
+# Создайте файл cookies.txt из переменной окружения
+cookies_data = os.getenv("COOKIES_DATA")
+if cookies_data:
+    with open(COOKIES_FILE, "w") as file:
+        file.write(cookies_data)
 #
 
 def load_url_storage():
