@@ -8,7 +8,7 @@ import subprocess
 URL_STORAGE_FILE = "url_storage_json"
 
 #
-COOKIES_FILE = "cookies.txt"
+COOKIES_FILE = os.path.join(os.path.dirname(__file__), "cookies.txt")
 #
 
 def load_url_storage():
