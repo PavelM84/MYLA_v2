@@ -10,12 +10,32 @@ def generate_url_id(url: str):
     return hashlib.md5(url.encode()).hexdigest()
 
 
+
+# 04/01/25-- source
+
 async def download_and_send_media(bot, chat_id, url, media_type):
      
+#    ydl_opts = {
+#        'format': 'best[height<=480]' if media_type == 'video' else 'bestaudio/best',
+#       'outtmpl': f"downloads/%(title)s.{'mweb' if media_type == 'video' else 'm4a'}",
+#    } 
+#
+# 04/01/25-- source
+
+#upd
+
     ydl_opts = {
-        'format': 'best[height<=480]' if media_type == 'video' else 'bestaudio/best',
-       'outtmpl': f"downloads/%(title)s.{'mp4' if media_type == 'video' else 'm4a'}",
-    } 
+        'format': 'bestvideo[height<=480]+bestaudio/best' if media_type == 'video' else 'bestaudio/best',
+        'outtmpl': f"downloads/%(title)s.{'mp4' if media_type == 'video' else 'm4a'}",
+        'merge_output_format': 'mp4' if media_type == 'video' else None,
+}
+
+
+#//upd
+
+
+
+
 
 #    ydl_opts = {
 #        'format': 'best[exp=mp4]' if media_type == 'video' else 'bestaudio[exp=m4a]/best',
