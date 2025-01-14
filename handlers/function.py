@@ -85,7 +85,7 @@ async def download_and_send_media(bot, chat_id, url, media_type):
         ydl_opts = {
             'format': 'bestvideo[height<=480]+bestaudio/best' if media_type == 'video' else 'bestaudio/best',
             'outtmpl': os.path.join(temp_dir, '%(title)s.%(ext)s'),
-            'merge_output_format': 'mp4' if media_type == 'video' else None,
+            'merge_output_format': 'mp4' if media_type == 'video' else 'm4a',
          }
 
         try:
