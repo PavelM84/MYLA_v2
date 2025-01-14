@@ -35,6 +35,25 @@ async def main():
     except Exception as ex:
         print(f"There is exeption: {ex}")
 
+
+## Добавляем логирование
+
+import logging
+
+# Настройка логирования
+logging.basicConfig(
+    filename="bot_requests.log",  # Файл для логов
+    level=logging.INFO,  # Уровень логирования
+    format="%(asctime)s - %(levelname)s - %(message)s",  # Формат записи
+)
+
+# Пример записи лога
+def log_request(user_id, message):
+    logging.info(f"User ID: {user_id}, Message: {message}")
+
+##закончили с логами
+
+
 if __name__ == '__main__':
     try:
         asyncio.run(main())
