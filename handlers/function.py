@@ -5,6 +5,7 @@ import time
 from aiogram.types import FSInputFile
 import subprocess
 import math
+import tempfile
 
 
 def generate_url_id(url: str):
@@ -75,38 +76,40 @@ def split_file(file_path, max_size_mb=50):
 
 
 async def download_and_send_media(bot, chat_id, url, media_type):
-    ydl_opts = {
-        'format': 'bestvideo[height<=480]+bestaudio/best' if media_type == 'video' else 'bestaudio/best',
-        'outtmpl': f"downloads/%(title)s.{'mp4' if media_type == 'video' else 'm4a'}",
-        'merge_output_format': 'mp4' if media_type == 'video' else None,
-    }
+    # Используем временную директорию для сохранения файлов
+    with tempfile.TemporaryDirectory() as temp_dir:
+        ydl_opts = {
+            'format': 'bestvideo[height<=480]+bestaudio/best' if media_type == 'video' else 'bestaudio/best',
+            'outtmpl': os.path.join(temp_dir, '%(title)s.%(ext)s'),
+            'merge_output_format': 'mp4' if media_type == 'video' else None,
+        }
 
-    try:
-        start_time = time.time()
+        try:
+            start_time = time.time()
 
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=True)
-            filename = ydl.prepare_filename(info)
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(url, download=True)
+                filename = ydl.prepare_filename(info)
 
-        end_time = time.time()
-        elapsed_time = end_time - start_time
+            end_time = time.time()
+            elapsed_time = end_time - start_time
 
-        # Проверяем размер файла и разбиваем его, если необходимо
-        file_parts = split_file(filename, max_size_mb=50)
+            # Проверяем размер файла и разбиваем его, если необходимо
+            file_parts = split_file(filename, max_size_mb=50)
 
-        # Отправляем все части поочередно
-        for i, part in enumerate(file_parts, 1):
-            media_file = FSInputFile(part)
-            caption = f"Часть {i} из {len(file_parts)}.\n" if len(file_parts) > 1 else ""
-            caption += f"Время загрузки: {elapsed_time:.2f} секунд."
-            if media_type == "video":
-                await bot.send_video(chat_id, media_file, caption=caption)
-            else:
-                await bot.send_audio(chat_id, media_file, caption=caption)
+            # Отправляем все части поочередно
+            for i, part in enumerate(file_parts, 1):
+                media_file = FSInputFile(part)
+                caption = f"Часть {i} из {len(file_parts)}.\n" if len(file_parts) > 1 else ""
+                caption += f"Время загрузки: {elapsed_time:.2f} секунд."
+                if media_type == "video":
+                    await bot.send_video(chat_id, media_file, caption=caption)
+                else:
+                    await bot.send_audio(chat_id, media_file, caption=caption)
 
-            os.remove(part)  # Удаляем отправленную часть
+                os.remove(part)  # Удаляем отправленную часть
 
-        os.remove(filename)  # Удаляем оригинальный файл
+            os.remove(filename)  # Удаляем оригинальный файл
 
-    except Exception as e:
-        await bot.send_message(chat_id, f"Ошибка: {e}")
+        except Exception as e:
+            await bot.send_message(chat_id, f"Ошибка: {e}")
