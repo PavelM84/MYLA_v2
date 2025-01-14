@@ -80,18 +80,13 @@ async def download_and_send_media(bot, chat_id, url, media_type):
     with tempfile.TemporaryDirectory() as temp_dir:
 
 
-    ydl_opts = {
-        'format': 'bestvideo[height<=480]+bestaudio/best' if media_type == 'video' else 'bestaudio/best',
-        'outtmpl': f"downloads/%(title)s.{'mp4' if media_type == 'video' else 'm4a'}",
-        'merge_output_format': 'mp4' if media_type == 'video' else None,
-            }
+     
         
-        
-       ## ydl_opts = {
+        ydl_opts = {
             'format': 'bestvideo[height<=480]+bestaudio/best' if media_type == 'video' else 'bestaudio/best',
             'outtmpl': os.path.join(temp_dir, '%(title)s.%(ext)s'),
             'merge_output_format': 'mp4' if media_type == 'video' else None,
-        ## }
+         }
 
         try:
             start_time = time.time()
