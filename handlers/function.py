@@ -6,6 +6,8 @@ from aiogram.types import FSInputFile
 import subprocess
 import math
 import tempfile
+import re
+
 
 
 def generate_url_id(url: str):
@@ -75,33 +77,53 @@ def split_file(file_path, max_size_mb=50):
     return output_files
 
 
+
+
+def sanitize_filename(filename):
+    """
+    Удаляет кириллические символы, пробелы и знаки препинания из имени файла.
+    """
+    filename = filename.replace(" ", "_")
+    filename = re.sub(r"[А-Яа-яЁё]", "", filename)
+    filename = re.sub(r"[^\w.]", "", filename)
+    return filename
+
 async def download_and_send_media(bot, chat_id, url, media_type):
-    # Используем временную директорию для сохранения файлов
     with tempfile.TemporaryDirectory() as temp_dir:
-
-
-     
-        
         ydl_opts = {
-            'format': 'bestvideo[height<=480]+bestaudio/best' if media_type == 'video' else 'bestaudio/best',
-            'outtmpl': os.path.join(temp_dir, '%(title)s.%(ext)s'),
-            'merge_output_format': 'mp4' if media_type == 'video' else 'm4a',
-         }
+            'format': 'best[height<=480]' if media_type == 'video' else 'bestaudio/best',
+            'outtmpl': os.path.join(temp_dir, '%(title)s.%(ext)s'),  # Сохраняем файл в temp_dir
+            'noplaylist': True,  # Чтобы не скачивать весь плейлист, если он есть
+            'writeinfojson': False,
+            'writethumbnail': True,  # Скачиваем миниатюру
+            'write-all-thumbnails': True,  # Загружает все доступные миниатюры
+            'merge_output_format': 'mp4' if media_type == 'video' else 'm4a'
+        }
 
         try:
             start_time = time.time()
 
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=True)
-                filename = ydl.prepare_filename(info)
+                filename = os.path.join(temp_dir, os.path.basename(ydl.prepare_filename(info)))  # Получаем полный путь
+
+                # Проверка существования файла
+                if not os.path.exists(filename):
+                    raise FileNotFoundError(f"Файл {filename} не найден.")
+
+                # Санитизация имени файла
+                sanitized_filename = sanitize_filename(os.path.basename(filename))
+                sanitized_filepath = os.path.join(temp_dir, sanitized_filename)
+                
+                # Переименование файла
+                os.rename(filename, sanitized_filepath)
+                filename = sanitized_filepath
 
             end_time = time.time()
             elapsed_time = end_time - start_time
 
-            # Проверяем размер файла и разбиваем его, если необходимо
             file_parts = split_file(filename, max_size_mb=50)
 
-            # Отправляем все части поочередно
             for i, part in enumerate(file_parts, 1):
                 media_file = FSInputFile(part)
                 caption = f"Часть {i} из {len(file_parts)}.\n" if len(file_parts) > 1 else ""
@@ -111,9 +133,9 @@ async def download_and_send_media(bot, chat_id, url, media_type):
                 else:
                     await bot.send_audio(chat_id, media_file, caption=caption)
 
-                os.remove(part)  # Удаляем отправленную часть
+                os.remove(part)
 
-            os.remove(filename)  # Удаляем оригинальный файл
+            os.remove(filename)
 
         except Exception as e:
             await bot.send_message(chat_id, f"Ошибка: {e}")
