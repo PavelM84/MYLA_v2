@@ -1,44 +1,11 @@
 import asyncio
 import os
-#1
-#import telebot
-#/1
-
+import logging
 from aiogram import Bot, Dispatcher
+from aiogram.exceptions import TelegramNetworkError
 from dotenv import load_dotenv
 
 from handlers import callaback, commands
-
-#2
-
-#@bot.message_handler(commands=['info'])
-#def send_show(message):
-#    bot.reply_to(message, "Вот, что я умею:")
-
-#2/
-
-
-
-async def main():
-    load_dotenv()
-    token = os.getenv('BOT_TOKEN')
-    bot = Bot(token)
-    dp = Dispatcher()
-    try:
-        if not os.path.exists("downloads"):
-            os.makedirs("downloads")
-        dp.include_router(commands.router)
-        dp.include_router(callaback.router)
-        print('Bot started')
-        await dp.start_polling(bot)
-        await bot.session.close()
-    except Exception as ex:
-        print(f"There is exeption: {ex}")
-
-
-## Добавляем логирование
-
-import logging
 
 # Настройка логирования
 logging.basicConfig(
@@ -47,16 +14,42 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(message)s",  # Формат записи
 )
 
-# Пример записи лога
 def log_request(user_id, message):
     logging.info(f"User ID: {user_id}, Message: {message}")
 
-##закончили с логами
+async def start_bot():
+    """Функция для запуска бота с обработкой сетевых ошибок."""
+    load_dotenv()
+    token = os.getenv('BOT_TOKEN')
+    
+    if not token:
+        logging.error("Ошибка: BOT_TOKEN не найден в .env файле!")
+        return
 
+    bot = Bot(token)
+    dp = Dispatcher()
+
+    if not os.path.exists("downloads"):
+        os.makedirs("downloads")
+
+    dp.include_router(commands.router)
+    dp.include_router(callaback.router)
+
+    while True:
+        try:
+            logging.info("Бот запущен и ожидает сообщения...")
+            await dp.start_polling(bot)
+        except TelegramNetworkError as e:
+            logging.error(f"Ошибка сети: {e}. Переподключение через 5 секунд...")
+            await asyncio.sleep(5)
+        except Exception as e:
+            logging.error(f"Критическая ошибка: {e}")
+            break  # Прерываем выполнение при фатальной ошибке
+        finally:
+            await bot.session.close()
 
 if __name__ == '__main__':
     try:
-        asyncio.run(main())
+        asyncio.run(start_bot())
     except KeyboardInterrupt:
         print('Exit')
-    
