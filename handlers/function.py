@@ -80,13 +80,9 @@ def sanitize_filename(filename):
 async def download_and_send_media(bot, chat_id, url, media_type):
     with tempfile.TemporaryDirectory() as temp_dir:
         ydl_opts = {
-            'format': 'bv*[height<=360]+ba/b[height<=360]' if media_type == 'video' else 'bestaudio/best',
+            'format': 'bestvideo[height<=480]+bestaudio/best' if media_type == 'video' else 'bestaudio/best',
             'outtmpl': os.path.join(temp_dir, '%(title)s.%(ext)s'),
-            'noplaylist': True,
-            'writeinfojson': False,
-            'writethumbnail': True,
-            'write-all-thumbnails': True,
-            'merge_output_format': 'mp4' if media_type == 'video' else 'm4a'
+            'merge_output_format': 'mp4' if media_type == 'video' else 'm4a',
         }
 
         try:
