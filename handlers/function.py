@@ -9,6 +9,7 @@ import tempfile
 import re
 
 
+
 def generate_url_id(url: str):
     return hashlib.md5(url.encode()).hexdigest()
 
@@ -19,13 +20,17 @@ def get_ffmpeg_path():
 
 
 def split_file(file_path, max_size_mb=50):
-    # Разделение файла на части (как в вашем оригинальном коде)
+    """
+    Разбивает файл на части размером не более max_size_mb.
+    Возвращает список путей к частям.
+    """
     file_size_bytes = os.path.getsize(file_path)
     file_size_mb = file_size_bytes / (1024 * 1024)
 
     if file_size_mb <= max_size_mb:
-        return [file_path]
+        return [file_path]  # Файл уже достаточно мал
 
+    # Получаем длительность видео
     ffmpeg_path = get_ffmpeg_path()
     try:
         result = subprocess.run(
@@ -42,9 +47,11 @@ def split_file(file_path, max_size_mb=50):
     except Exception as e:
         raise RuntimeError(f"Не удалось получить длительность видео: {e}")
 
+    # Рассчитываем длительность каждой части
     num_chunks = math.ceil(file_size_mb / max_size_mb)
     chunk_duration = math.ceil(total_duration / num_chunks)
 
+    # Разбиваем видео на части
     base_name, ext = os.path.splitext(file_path)
     output_files = []
     start_time = 0
@@ -60,7 +67,7 @@ def split_file(file_path, max_size_mb=50):
             "-t",
             str(chunk_duration),
             "-c",
-            "copy",
+            "copy",  # Используем stream copy, чтобы избежать повторной обработки
             output_file,
         ]
         subprocess.run(command, check=True)
@@ -70,36 +77,34 @@ def split_file(file_path, max_size_mb=50):
     return output_files
 
 
+
+
 def sanitize_filename(filename):
+    """
+    Удаляет кириллические символы, пробелы и знаки препинания из имени файла.
+    """
     filename = filename.replace(" ", "_")
     filename = re.sub(r"[А-Яа-яЁё]", "", filename)
     filename = re.sub(r"[^\w.]", "", filename)
     return filename
 
-
 async def download_and_send_media(bot, chat_id, url, media_type):
     with tempfile.TemporaryDirectory() as temp_dir:
         ydl_opts = {
-            'format': 'bestvideo[height<=480][ext=mp4]+bestaudio[ext=m4a]/best[height<=480][ext=mp4]',  # Скачивание видео до 480p с MP4
-            'outtmpl': os.path.join(temp_dir, '%(title)s.%(ext)s'),
-            'noplaylist': True,  # Без скачивания плейлистов
-            'merge_output_format': 'mp4',  # Если видео и аудио загружаются раздельно, объединить в MP4
-        }
-
+            'format': 'best[height<=480]' if media_type == 'video' else 'bestaudio/best',
+        'outtmpl': f"downloads/%(title)s.{'mp4' if media_type == 'video' else 'm4a'}",
+        } 
 
         try:
             start_time = time.time()
 
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=True)
-                filename = os.path.join(temp_dir, os.path.basename(ydl.prepare_filename(info)))
+                filename = ydl.prepare_filename(info)
 
-                if not os.path.exists(filename):
-                    raise FileNotFoundError(f"Файл {filename} не найден.")
-
+                # Санитизация имени файла
                 sanitized_filename = sanitize_filename(os.path.basename(filename))
                 sanitized_filepath = os.path.join(temp_dir, sanitized_filename)
-
                 os.rename(filename, sanitized_filepath)
                 filename = sanitized_filepath
 
@@ -121,8 +126,5 @@ async def download_and_send_media(bot, chat_id, url, media_type):
 
             os.remove(filename)
 
-        except FileNotFoundError as e:
-            # Игнорировать ошибку с отсутствием файла, если это не критическая ошибка
-            pass
         except Exception as e:
             await bot.send_message(chat_id, f"Ошибка: {e}")
