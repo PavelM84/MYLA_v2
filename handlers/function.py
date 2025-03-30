@@ -80,10 +80,12 @@ def sanitize_filename(filename):
 async def download_and_send_media(bot, chat_id, url, media_type):
     with tempfile.TemporaryDirectory() as temp_dir:
         ydl_opts = {
-            'format': 'bestvideo[height<=480]+bestaudio/best' if media_type == 'video' else 'bestaudio/best',
+            'format': 'bestvideo[height<=480][ext=mp4]+bestaudio[ext=m4a]/best[height<=480][ext=mp4]',  # Скачивание видео до 480p с MP4
             'outtmpl': os.path.join(temp_dir, '%(title)s.%(ext)s'),
-            'merge_output_format': 'mp4' if media_type == 'video' else 'm4a',
+            'noplaylist': True,  # Без скачивания плейлистов
+            'merge_output_format': 'mp4',  # Если видео и аудио загружаются раздельно, объединить в MP4
         }
+
 
         try:
             start_time = time.time()
