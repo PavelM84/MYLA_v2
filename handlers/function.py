@@ -89,24 +89,24 @@ def sanitize_filename(filename):
     return filename
 
 async def download_and_send_media(bot, chat_id, url, media_type):
-    with tempfile.TemporaryDirectory() as temp_dir:
-        ydl_opts = {
-            'format': 'best[height<=480]' if media_type == 'video' else 'bestaudio/best',
-        'outtmpl': f"downloads/%(title)s.{'mp4' if media_type == 'video' else 'm4a'}",
-        } 
+with tempfile.TemporaryDirectory() as temp_dir:
+    ydl_opts = {
+        'format': 'best[height<=480]' if media_type == 'video' else 'bestaudio/best',
+        'outtmpl': os.path.join(temp_dir, '%(title)s.%(ext)s'),  # сохраняем файл сразу во временную папку
+    } 
 
-        try:
-            start_time = time.time()
+    try:
+        start_time = time.time()
 
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                info = ydl.extract_info(url, download=True)
-                filename = ydl.prepare_filename(info)
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=True)
+            filename = ydl.prepare_filename(info)
 
-                # Санитизация имени файла
-                sanitized_filename = sanitize_filename(os.path.basename(filename))
-                sanitized_filepath = os.path.join(temp_dir, sanitized_filename)
-                os.rename(filename, sanitized_filepath)
-                filename = sanitized_filepath
+            # Санитизация имени файла
+            sanitized_filename = sanitize_filename(os.path.basename(filename))
+            sanitized_filepath = os.path.join(temp_dir, sanitized_filename)
+            os.rename(filename, sanitized_filepath)
+            filename = sanitized_filepath
 
             end_time = time.time()
             elapsed_time = end_time - start_time
